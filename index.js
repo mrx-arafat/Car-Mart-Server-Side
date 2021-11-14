@@ -1,11 +1,19 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
-
+const admin = require("firebase-admin");
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+
+//car-mart-firebase-admin-sdk
+
+const serviceAccount = require("./car-mart-firebase-adminsdk.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 //connect
 
@@ -15,6 +23,20 @@ const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
+
+//verify token
+
+async function verifyToken(req, res, next) {
+  if (req.headers?.authorization?.startsWith("Bearer ")) {
+    const token = req.headers.authorization.split(" ")[1];
+
+    try {
+      const decodedUser = await admin.auth().verifyIdToken(token);
+      req.decodedEmail = decodedUser.email;
+    } catch {}
+  }
+  next();
+}
 
 // console.log(uri);
 async function run() {
@@ -33,20 +55,6 @@ async function run() {
       const cursor = ordersCollection.find(query);
       const orders = await cursor.toArray();
       res.json(orders);
-    });
-
-    //get specific user to verify admin
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-
-      const user = await usersCollection.findOne(query);
-
-      let isAdmin = false;
-      if (user?.role === "admin") {
-        isAdmin = true;
-      }
-      res.json({ admin: isAdmin });
     });
 
     //post api for create orders
@@ -81,13 +89,38 @@ async function run() {
     });
     //make admin
 
-    app.put("/users/admin", async (req, res) => {
+    app.put("/users/admin", verifyToken, async (req, res) => {
       const user = req.body;
-      const filter = { email: user.email };
-      const updateDoc = { $set: { role: "admin" } };
+      const requester = req.decodedEmail;
+      if (requester) {
+        const requesterAccount = await usersCollection.findOne({
+          email: requester,
+        });
+        if (requesterAccount.role === "admin") {
+          const filter = { email: user.email };
+          const updateDoc = { $set: { role: "admin" } };
+          const result = await usersCollection.updateOne(filter, updateDoc);
+          res.json(result);
+        }
+      } else {
+        res
+          .status(403)
+          .json({ message: "Get Lost Bro You Don't Have This Access" });
+      }
+    });
 
-      const result = await usersCollection.updateOne(filter, updateDoc);
-      res.json(result);
+    //get specific user to verify admin
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+
+      const user = await usersCollection.findOne(query);
+
+      let isAdmin = false;
+      if (user?.role === "admin") {
+        isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
     });
   } finally {
     // await client.close();
