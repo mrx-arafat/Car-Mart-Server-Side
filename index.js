@@ -25,9 +25,12 @@ async function run() {
 
     app.post("/orders", async (req, res) => {
       const order = req.body;
-      console.log(order);
 
-      res.json("hello");
+      const result = await ordersCollection.insertOne(order);
+
+      console.log(result);
+      //sent to front-end
+      res.json(result);
     });
   } finally {
     // await client.close();
