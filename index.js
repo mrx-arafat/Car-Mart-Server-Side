@@ -4,7 +4,7 @@ const port = process.env.PORT || 5000;
 
 const cors = require("cors");
 app.use(cors());
-
+app.use(express.json());
 require("dotenv").config();
 
 //connect
@@ -17,17 +17,29 @@ const client = new MongoClient(uri, {
 });
 
 console.log(uri);
+async function run() {
+  try {
+    await client.connect();
+    const database = client.db("Car_Mart");
+    const ordersCollection = database.collection("orders");
 
-client.connect((err) => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  client.close();
-});
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      console.log(order);
+
+      res.json("hello");
+    });
+  } finally {
+    // await client.close();
+  }
+}
+
+run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello car mart");
+  res.send("Hello cmart!");
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`listening at ${port}`);
 });
