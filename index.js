@@ -16,12 +16,13 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 
-console.log(uri);
+// console.log(uri);
 async function run() {
   try {
     await client.connect();
     const database = client.db("Car_Mart");
     const ordersCollection = database.collection("orders");
+    const usersCollection = database.collection("users");
 
     //get api
 
@@ -34,13 +35,19 @@ async function run() {
       res.json(orders);
     });
 
-    //post api
+    //post api for create orders
     app.post("/orders", async (req, res) => {
       const order = req.body;
       const result = await ordersCollection.insertOne(order);
 
       console.log(result);
       //sent to front-end
+      res.json(result);
+    });
+    //post api for create users
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
       res.json(result);
     });
   } finally {
