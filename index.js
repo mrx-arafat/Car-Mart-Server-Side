@@ -45,6 +45,7 @@ async function run() {
     const database = client.db("Car_Mart");
     const ordersCollection = database.collection("orders");
     const usersCollection = database.collection("users");
+    const servicesCollection = database.collection("services");
 
     //get api
 
@@ -55,6 +56,12 @@ async function run() {
       const cursor = ordersCollection.find(query);
       const orders = await cursor.toArray();
       res.json(orders);
+    });
+
+    app.get("/services", async (req, res) => {
+      const cursor = servicesCollection.find({});
+      const services = await cursor.toArray();
+      res.json(services);
     });
 
     //post api for create orders
