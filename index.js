@@ -46,6 +46,20 @@ async function run() {
     const ordersCollection = database.collection("orders");
     const usersCollection = database.collection("users");
     const servicesCollection = database.collection("services");
+    const reviewsCollection = database.collection("reviews");
+
+    //review api
+
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewsCollection.insertOne(review);
+      res.json(result);
+    });
+    app.get("/reviews", async (req, res) => {
+      const cursor = reviewsCollection.find({});
+      const review = await cursor.toArray();
+      res.json(review);
+    });
 
     //get api
 
