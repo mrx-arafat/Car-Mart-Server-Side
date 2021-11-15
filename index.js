@@ -71,7 +71,12 @@ async function run() {
       const orders = await cursor.toArray();
       res.json(orders);
     });
-
+    //service api
+    app.post("/services", async (req, res) => {
+      const service = req.body;
+      const result = await servicesCollection.insertOne(service);
+      res.json(result);
+    });
     app.get("/services", async (req, res) => {
       const cursor = servicesCollection.find({});
       const services = await cursor.toArray();
